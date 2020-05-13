@@ -64,6 +64,7 @@ fn getMtlParams mtl =
 	mtlType = classof mtl
 	/*
 	Mtl Pars array
+	0.Material Type
 	1.Diffuse
 	2.Diffuse Texmap
 	3.Reflection
@@ -79,6 +80,7 @@ fn getMtlParams mtl =
 	13.Normal
 	*/
 	list = #()
+	matType = "PBR"
 	diff = "undefined"
 	diffmap = "undefined"
 	refl = "undefined"
@@ -97,6 +99,7 @@ fn getMtlParams mtl =
 	(
 		VrayMtl:
 		(
+			
 			diff = convertColor2Float mtl.diffuse
 			try( diffmap = normalPath mtl.texmap_Diffuse.filename ) catch ( diffmap = "undefined")
 			refl = (mtl.reflection.value / 255.0) as string
@@ -178,7 +181,7 @@ fn writeBody mtl file =
 	format "\"%\":\"%\"," "alpha" pars[11] to:file
 	format "\"%\":\"%\"," "alphaTexmap" pars[12] to:file
 	format "\"%\":\"%\"" "normal" pars[13] to:file
-	format "}], \n" to:file
+	format "}]" to:file
 )
 
 --整理场景中的纹理
@@ -287,8 +290,8 @@ rollout exportMtl "Export Mtl"
 	on btnMtl pressed do
 	(		
 		filename = maxFileName
-		-->replace <string> <from_integer> <length_integer> <new_string>
-		filename = replace filename (filename.count-3) 4 "_MTL.json"
+		
+		filename = replace filename (filename.count-3) 4 "_MTL00.json"
 		filename = maxFilePath + filename
 		
 		if doesFileExist filename then
@@ -296,31 +299,36 @@ rollout exportMtl "Export Mtl"
 			try(
 				deleteFile filename
 			)catch(
-				filename = replace filename (filename.count-3) 4 "_MTL.json"
+				filename = replace filename (filename.count-3) 4 "_MTL00.json"
 			)
 		)
 		print filename
-		ExportMtlFile = createfile filename
+		
+		--try(
+			ExportMtlFile = createfile filename encoding:#utf8 writeBOM:false 
 		
 		
-		format "{" to:ExportMtlFile
-		
-		for i in sceneMaterials do
-		(
-			writeBody i ExportMtlFile
-			if classof i == MultiMaterial do
+			format "{" to:ExportMtlFile
+			
+			for i = 1 to sceneMaterials.count do
 			(
-				for j = 1 to i.numsubs do
+				writeBody sceneMaterials[i] ExportMtlFile
+				if i != sceneMaterials.count do format "," to:ExportMtlFile
+				if classof sceneMaterials[i] == MultiMaterial do
 				(
-					writeBody i[j] ExportMtlFile
+					for j = 1 to sceneMaterials[i].numsubs do
+					(
+						writeBody sceneMaterials[i][j] ExportMtlFile
+						format "," to:ExportMtlFile
+					)
 				)
 			)
-		)
-		
-		format "}" to:ExportMtlFile
-		
-		--print ExportMtlFile
-		close ExportMtlFile 	
+			
+			format "}" to:ExportMtlFile
+			
+			--print ExportMtlFile
+			close ExportMtlFile
+		--)catch(Messagebox "File can't create")
 	)
 )
 
