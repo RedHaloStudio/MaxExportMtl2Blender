@@ -33,19 +33,20 @@ if __name__ == "__main__":
 bpy.ops.test.open_filebrowser('INVOKE_DEFAULT')
 """
 
-mtlFileName = "E:\\_MTL00.json"
-matType = "standard"
+mtlFileName = "E:\\temp\\Cache\\BMAX_TMP_MAX.json"
+matType = "pbr"
 diffuseColor = "1,1,1,1"
 diffuseMap = "undfined"
-reflectionColor = 0.52
+reflectionColor = "0.52"
 reflectionMap = "undefined"
-refractionColor = 0.45
+glossiness = "0"
+refractionColor = "0.45"
 refractionMap = "undefined"
-metallic = 0
+metallic = "0"
 metallicMap = "undefined"
-ior = 1.52
-iorMap = "undefined"
-alpha = 1
+IOR = "1.52"
+IORMap = "undefined"
+alpha = "1"
 alphaMap = "undefined"
 normal = "undefined"
 
@@ -68,61 +69,185 @@ def str2Vector(str):
 with open(mtlFileName,'r', encoding = 'utf-8') as f:
     mtlDic = json.load(f)
 
-for i in allMats:
-    mtlName = i.name
+for mat in allMats:
+    try:
+        mtlName = mat.name
+        
+        nodes = mat.node_tree.nodes
+        links = mat.node_tree.links
 
-    nodes = i.node_tree.nodes
-    links = i.node_tree.links
+        ypos = 0
 
-    nodes.clear()
+        nodes.clear()
 
-    outputShader = nodes.new("ShaderNodeOutputMaterial")
+        outputShader = nodes.new("ShaderNodeOutputMaterial")
 
-    mapShader = nodes.new("ShaderNodeMapping")
-    mapShader.location = (-900, 0)
+        mapShader = nodes.new("ShaderNodeMapping")
+        mapShader.location = (-1200, 0)
 
-    texcoordShader = nodes.new("ShaderNodeTexCoord")
-    texcoordShader.location = (-1200, 0)
+        texcoordShader = nodes.new("ShaderNodeTexCoord")
+        texcoordShader.location = (-1500, 0)
 
-    bsdfShader = nodes.new("ShaderNodeBsdfPrincipled")
+        bsdfShader = nodes.new("ShaderNodeBsdfPrincipled")
+        bsdfShader.location = (-300, ypos)
+        links.new(bsdfShader.outputs[0],outputShader.inputs[0])
 
-    dc = "0.25,0.25,0.25,1"
-    #Diffuse Color
-    diffuseColor = mtlDic[mtlName][0]["diffuse"]
-    
-    bsdfShader.inputs[0].default_value = str2Vector(diffuseColor)
-    #Reflection Color
-    reflectionColor = mtlDic[mtlName][0]["reflection"]
+        #Diffuse Color
+        diffuseColor = mtlDic[mtlName][0]["diffuse"]
+        bsdfShader.inputs[0].default_value = str2Vector(diffuseColor)
+        #Diffuse Map
+        if mtlDic[mtlName][0]["diffuseTexmap"] != "undefined":
+            imgShader = nodes.new("ShaderNodeTexImage")
+            imgShader.location = (-600, ypos)
+            links.new(imgShader.outputs[0], bsdfShader.inputs[0])
+            links.new(mapShader.outputs[0], imgShader.inputs[0])
+            links.new(texcoordShader.outputs[2], mapShader.inputs[0])
+            #Set Image
+            diffuseMap = mtlDic[mtlName][0]["diffuseTexmap"]
+            imgs = bpy.data.images
+            _index = findImages(imgs,diffuseMap)
+            if _index != -1:
+                imgShader.image = imgs[_index]
+            else:
+                imgShader.image = bpy.data.images.load(diffuseMap)
 
-    #Refraction Color
-    refractionColor = mtlDic[mtlName][0]["refraction"]
+        #Reflection Color
+        bsdfShader.inputs[5].default_value = float(mtlDic[mtlName][0]["reflection"])
+        #Reflection Map
+        if mtlDic[mtlName][0]["reflectionTexmap"] != "undefined":
+            ypos += -300
+            imgShader = nodes.new("ShaderNodeTexImage")
+            imgShader.location = (-600, ypos)
+            links.new(imgShader.outputs[0], bsdfShader.inputs[6])
+            links.new(mapShader.outputs[0], imgShader.inputs[0])
+            links.new(texcoordShader.outputs[2], mapShader.inputs[0])
+            #Set Image
+            reflectionMap = mtlDic[mtlName][0]["reflectionTexmap"]
+            imgs = bpy.data.images
+            _index = findImages(imgs,reflectionMap)
+            if _index != -1:
+                imgShader.image = imgs[_index]
+            else:
+                imgShader.image = bpy.data.images.load(reflectionMap)
 
-    #Metallic
-    metallic = mtlDic[mtlName][0]["metallic"]
-    bsdfShader.inputs[5].default_value = metallic
+        #Glossiness Color
+        bsdfShader.inputs[7].default_value = float(mtlDic[mtlName][0]["glossiness"])
+        #glossiness Map
+        if mtlDic[mtlName][0]["glossinessTexmap"] != "undefined":
+            ypos += -300
+            imgShader = nodes.new("ShaderNodeTexImage")
+            imgShader.location = (-600, ypos)
+            links.new(imgShader.outputs[0], bsdfShader.inputs[8])
+            links.new(mapShader.outputs[0], imgShader.inputs[0])
+            links.new(texcoordShader.outputs[2], mapShader.inputs[0])
+            #Set Image
+            glossinessMap = mtlDic[mtlName][0]["glossinessTexmap"]
+            imgs = bpy.data.images
+            _index = findImages(imgs,glossinessMap)
+            if _index != -1:
+                imgShader.image = imgs[_index]
+            else:
+                imgShader.image = bpy.data.images.load(glossinessMap)
 
-    #IOR
-    ior = mtlDic[mtlName][0]["IOR"]
-    bsdfShader.inputs[14].default_value = ior
+        #Refraction Color
+        bsdfShader.inputs[15].default_value = float(mtlDic[mtlName][0]["refraction"])
+        #fefraction Map
+        if mtlDic[mtlName][0]["refractionTexmap"] != "undefined":
+            ypos += -300
+            imgShader = nodes.new("ShaderNodeTexImage")
+            imgShader.location = (-600, ypos)
+            links.new(imgShader.outputs[0], bsdfShader.inputs[16])
+            links.new(mapShader.outputs[0], imgShader.inputs[0])
+            links.new(texcoordShader.outputs[2], mapShader.inputs[0])
+            #Set Image
+            refractionMap = mtlDic[mtlName][0]["refractionTexmap"]
+            imgs = bpy.data.images
+            _index = findImages(imgs,refractionMap)
+            if _index != -1:
+                imgShader.image = imgs[_index]
+            else:
+                imgShader.image = bpy.data.images.load(refractionMap)
 
-    #Alpha
-    alpha = mtlDic[mtlName][0]["alpha"]
-    bsdfShader.inputs[18].default_value = alpha
+        #Metallic
+        bsdfShader.inputs[4].default_value = float(mtlDic[mtlName][0]["metallic"])
+        #metallic Map
+        if mtlDic[mtlName][0]["metallicTexmap"] != "undefined":
+            ypos += -300
+            imgShader = nodes.new("ShaderNodeTexImage")
+            imgShader.location = (-600, ypos)
+            links.new(imgShader.outputs[0], bsdfShader.inputs[5])
+            links.new(mapShader.outputs[0], imgShader.inputs[0])
+            links.new(texcoordShader.outputs[2], mapShader.inputs[0])
+            #Set Image
+            metallicMap = mtlDic[mtlName][0]["metallicTexmap"]
+            imgs = bpy.data.images
+            _index = findImages(imgs,metallicMap)
+            if _index != -1:
+                imgShader.image = imgs[_index]
+            else:
+                imgShader.image = bpy.data.images.load(metallicMap)
 
-    bsdfShader.location = (-300, 0)
-    links.new(bsdfShader.outputs[0],outputShader.inputs[0])
+        #IOR
+        bsdfShader.inputs[14].default_value = float(mtlDic[mtlName][0]["IOR"])
+        #IOR Map
+        if mtlDic[mtlName][0]["IORTexmap"] != "undefined":
+            ypos += -300
+            imgShader = nodes.new("ShaderNodeTexImage")
+            imgShader.location = (-600, ypos)
+            links.new(imgShader.outputs[0], bsdfShader.inputs[15])
+            links.new(mapShader.outputs[0], imgShader.inputs[0])
+            links.new(texcoordShader.outputs[2], mapShader.inputs[0])
+            #Set Image
+            IORMap = mtlDic[mtlName][0]["IORTexmap"]
+            imgs = bpy.data.images
+            _index = findImages(imgs,IORMap)
+            if _index != -1:
+                imgShader.image = imgs[_index]
+            else:
+                imgShader.image = bpy.data.images.load(IORMap)
 
-    imgShader = nodes.new("ShaderNodeTexImage")
-    imgShader.location = (-600, 0)
-    links.new(imgShader.outputs[0], bsdfShader.inputs[0])
-    links.new(mapShader.outputs[0], imgShader.inputs[0])
-    links.new(texcoordShader.outputs[0], mapShader.inputs[0])
-    #Set Image
-    diffuseMap = "E:\\maps\\0000\\6.jpg"
-    imgs = bpy.data.images
-    _index = findImages(imgs,diffuseMap)
-    if _index != -1:
-        imgShader.image = imgs[_index]
-    else:
-        imgShader,imge = bpy,data.images.load(diffuseMap)
-    
+        #Alpha
+        bsdfShader.inputs[18].default_value = float(mtlDic[mtlName][0]["alpha"])        
+        #alpha Map
+        if mtlDic[mtlName][0]["alphaTexmap"] != "undefined":
+            ypos += -300
+            imgShader = nodes.new("ShaderNodeTexImage")
+            imgShader.location = (-600, ypos)
+            links.new(imgShader.outputs[0], bsdfShader.inputs[19])
+            links.new(mapShader.outputs[0], imgShader.inputs[0])
+            links.new(texcoordShader.outputs[2], mapShader.inputs[0])
+            #Set Image
+            alphaMap = mtlDic[mtlName][0]["alphaTexmap"]
+            imgs = bpy.data.images
+            _index = findImages(imgs,alphaMap)
+            if _index != -1:
+                imgShader.image = imgs[_index]
+            else:
+                imgShader.image = bpy.data.images.load(alphaMap)
+
+        #normal Map
+        if mtlDic[mtlName][0]["normal"] != "undefined":
+            ypos += -300
+            imgShader = nodes.new("ShaderNodeTexImage")
+            imgShader.location = (-900, ypos)
+
+            bumpShader = nodes.new("ShaderNodeBump")
+            bumpShader.inputs[0].default_value = 0.1
+            bumpShader.location = (-600, ypos)
+            
+            links.new(bumpShader.outputs[0], bsdfShader.inputs[20])
+            links.new(imgShader.outputs[0], bumpShader.inputs[0])
+            links.new(mapShader.outputs[0], imgShader.inputs[0])
+            links.new(texcoordShader.outputs[2], mapShader.inputs[0])
+
+            #Set Image
+            normalMap = mtlDic[mtlName][0]["normal"]
+            imgs = bpy.data.images
+            _index = findImages(imgs,normalMap)
+            if _index != -1:
+                imgShader.image = imgs[_index]
+            else:
+                imgShader.image = bpy.data.images.load(normalMap)
+
+    except:
+        print("Something is down")
