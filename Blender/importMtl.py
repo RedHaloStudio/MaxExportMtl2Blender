@@ -137,7 +137,7 @@ for mat in allMats:
             ypos += -300
             imgShader = nodes.new("ShaderNodeTexImage")
             imgShader.location = (-600, ypos)
-            links.new(imgShader.outputs[0], bsdfShader.inputs[8])
+            links.new(imgShader.outputs[0], bsdfShader.inputs[7])
             links.new(mapShader.outputs[0], imgShader.inputs[0])
             links.new(texcoordShader.outputs[2], mapShader.inputs[0])
             #Set Image
@@ -235,8 +235,8 @@ for mat in allMats:
             bumpShader.inputs[0].default_value = 0.1
             bumpShader.location = (-600, ypos)
             
-            links.new(bumpShader.outputs[0], bsdfShader.inputs[20])
-            links.new(imgShader.outputs[0], bumpShader.inputs[0])
+            links.new(bumpShader.outputs[0], bsdfShader.inputs[19])
+            links.new(imgShader.outputs[0], bumpShader.inputs[2])
             links.new(mapShader.outputs[0], imgShader.inputs[0])
             links.new(texcoordShader.outputs[2], mapShader.inputs[0])
 

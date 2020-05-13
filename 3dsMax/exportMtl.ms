@@ -162,7 +162,7 @@ fn getMtlParams mtl =
 			refr = (mtl.reflection.value / 255.0) as string
 			
 			glossiness = mtl.reflection_glossiness
-			try( glossinessTexmap = normalPath mtl.texmap_reflectionGlossiness.filename ) catch ()
+			try( glossinessmap = normalPath mtl.texmap_reflectionGlossiness.filename ) catch ()
 
 			try( refrmap = normalPath mtl.textmap_Refraction.filename ) catch ()		
 			
@@ -338,21 +338,6 @@ fn simplyMat mat =
 ---UI界面
 rollout exportMtl "Export Mtl"
 (	
-	--button btnDebug "1.整理场景材质"
-	
-	on btnDebug pressed do
-	(
-		mtl_name_list = #()
-		allMats = collectMat()
-		for i in allMats do
-		(	
-			--整理场景材质，去除不必要的节点
-			simplyMat i
-			--场景名字统一化
-			simplyMtlName i
-		)
-	)
-	
 	button btnMtl "导出材质列表" height:45
 	label lbl "配合BMax使用"
 	
@@ -372,7 +357,7 @@ rollout exportMtl "Export Mtl"
 				filename = replace filename (filename.count-3) 4 "_MTL00.json"
 			)
 		)		
-		--try(
+		
 		ExportMtlFile = createfile filename encoding:#utf8 writeBOM:false 
 	
 		format "{" to:ExportMtlFile
@@ -400,7 +385,6 @@ rollout exportMtl "Export Mtl"
 		format "}" to:ExportMtlFile
 
 		close ExportMtlFile
-		--)catch(Messagebox "File can't create")
 	)
 )
 
