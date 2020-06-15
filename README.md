@@ -1,1 +1,0 @@
-# MaxExportMtl2Blender
