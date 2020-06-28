@@ -1,5 +1,8 @@
 # MaxExportMtl2Blender
 
+#### 下载地址
+##### https://github.com/RedHaloStudio/MaxExportMtl2Blender/releases
+
 把3ds Max场景中的Vray材质转化为Blender材质
 
 #### 安装步骤：
